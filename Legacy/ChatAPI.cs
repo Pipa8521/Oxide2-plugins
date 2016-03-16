@@ -70,6 +70,7 @@ namespace Oxide.Plugins
 		bool OnPlayerChat(NetUser netuser, string message)
 		{
 			object obj = Interface.CallHook("ChatAPIPlayerChat", netuser, message);
+			bool strip = true;
 			if (obj is bool) {
 				if((bool)obj == false) {
 					return false;
@@ -77,9 +78,10 @@ namespace Oxide.Plugins
 			}
 			if(obj is string) {
 				message = (string)obj;
+				strip = false;
 			}
 			if(simplemute == null) {
-				if(SendMessage(netuser, message)) {
+				if(SendMessage(netuser, message, strip)) {
 					return false;
 				}
 			} else {
@@ -92,18 +94,21 @@ namespace Oxide.Plugins
 						return false;
 					}
 				}
-				if(SendMessage(netuser, message)) {
+				if(SendMessage(netuser, message, strip)) {
 					return false;
 				}
 			}
 			return true;
 		}
 		
-		bool SendMessage(NetUser netuser, string message) {
+		bool SendMessage(NetUser netuser, string message, bool strip = true) {
 			if(getCP(netuser) is ChatPerson) {
 				ChatPerson cp = (ChatPerson)getCP(netuser);
 				string tag = string.Format(FormatTag, cp.prefix, cp.displayName, cp.suffix);
-				string msg = string.Format(FormatMessage, cp.chatcolor, StripBBCode(message));
+				if(strip) {
+					message = StripBBCode(message);
+				}
+				string msg = string.Format(FormatMessage, cp.chatcolor, message);
 				rust.BroadcastChat(tag, msg);
 				Puts(tag + " " + message);
 				return true;
