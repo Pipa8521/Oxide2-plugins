@@ -110,7 +110,7 @@ namespace Oxide.Plugins
 				}
 				string msg = string.Format(FormatMessage, cp.chatcolor, message);
 				rust.BroadcastChat(tag, msg);
-				Puts(tag + " " + message);
+				Puts(tag + " " + StripBBCode(message));
 				return true;
 			}
 			return false;
