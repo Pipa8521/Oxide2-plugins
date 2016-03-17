@@ -17,32 +17,12 @@ namespace Oxide.Plugins
 		Plugin Share;
 		
 		static float distance = 50.0f;
-		
-		/*[ChatCommand("checkwhere")]
-		void cmdCheckWhere(NetUser netuser, string command, string[] args)
-		{
-			object obj = ClosestBuilding(netuser);
-			if(obj is float) {
-				SendReply(netuser, string.Format( "Closest building is {0}", (float)obj));
-			} else {
-				SendReply(netuser, "There aren't any buildings in game.");
-			}
-		}*/
-		
-		void LoadDefaultConfig() { }
 
-		private void CheckCfg<T>(string Key, ref T var)
-		{
-			if (Config[Key] is T)
-			var = (T)Config[Key];
-			else
-			Config[Key] = var;
-		} 
-		
 		void Init()
 		{
 			CheckCfg<float>("Distance between player and building", ref distance);
 			SaveConfig();
+			LoadDefaultMessages();
 		}
 		
 		object canTeleport(NetUser netuser) {
@@ -51,10 +31,10 @@ namespace Oxide.Plugins
 				if ((float)obj > distance) {
 					return null;
 				}
-				SendReply(netuser, string.Format( "Closest building is {0} there must be distance more than {1}", (float)obj, distance));
+				SendReply(netuser, string.Format( GetMessage("ClosestBuilding", netuser.userID), (float)obj, distance));
 				return true;
 			} else {
-				SendReply(netuser, "There aren't any buildings in game.");
+				SendReply(netuser, getMessage("ThereAreNoBuildings", netuser.userID);
 				return null;
 			}
 		}
@@ -101,4 +81,32 @@ namespace Oxide.Plugins
 			return false;
 		}
 	}
+	#region Localization
+	void LoadDefaultMessages()
+	{
+		var messages = new Dictionary<string, string>
+		{
+			{"ClosestBuilding","Closest building is {0} there must be distance more than {1}" },
+			{"ThereAreNoBuildings","There aren't any buildings in game." }
+		};
+		SortedDictionary<string, string> sortedMessages = new SortedDictionary<string, string>(messages);
+		messages.Clear();
+		foreach (KeyValuePair<string, string> Current in sortedMessages) messages.Add(Current.Key, Current.Value);
+		lang.RegisterMessages(messages, this);
+		SaveConfig();
+	}
+	string GetMessage(string key, string steamId = null) => lang.GetMessage(key, this, steamId);
+	#endregion
+	
+	#region ConfigFiles
+	void LoadDefaultConfig() { }
+
+	private void CheckCfg<T>(string Key, ref T var)
+	{
+		if (Config[Key] is T)
+		var = (T)Config[Key];
+		else
+		Config[Key] = var;
+	} 
+	#endregion
 }
