@@ -1,8 +1,5 @@
-// Reference: Facepunch.MeshBatch
-// Reference: Google.ProtocolBuffers
 using System;
 using System.Linq;
-using System.Reflection;
 using System.Collections.Generic;
 using UnityEngine;
 using Oxide.Core;
