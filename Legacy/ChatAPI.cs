@@ -7,7 +7,7 @@ using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
 {
-    [Info("ChatAPI", "Prefix", "0.1.0")]
+    [Info("ChatAPI", "Prefix", "0.1.1")]
     public class ChatAPI : RustLegacyPlugin
     {
         [PluginReference]
@@ -104,11 +104,11 @@ namespace Oxide.Plugins
 		bool SendMessage(NetUser netuser, string message, bool strip = true) {
 			if(getCP(netuser) is ChatPerson) {
 				ChatPerson cp = (ChatPerson)getCP(netuser);
-				string tag = string.Format(FormatTag, cp.prefix, cp.displayName, cp.suffix);
+				string tag = string.Format(FormatTag, cp.prefix, cp.displayName, cp.suffix).Trim();
 				if(strip) {
 					message = StripBBCode(message);
 				}
-				string msg = string.Format(FormatMessage, cp.chatcolor, message);
+				string msg = string.Format(FormatMessage, cp.chatcolor, message).Trim();
 				rust.BroadcastChat(tag, msg);
 				Puts(tag + " " + StripBBCode(message));
 				return true;
