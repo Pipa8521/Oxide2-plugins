@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Collections.Generic;
 using UnityEngine;
 using Oxide.Core;
+using Oxide.Core.Libraries;
 using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
@@ -17,7 +18,16 @@ namespace Oxide.Plugins
 		Plugin Share;
 		
 		static float distance = 50.0f;
+		
+		void LoadDefaultConfig() { }
 
+		private void CheckCfg<T>(string Key, ref T var)
+		{
+			if (Config[Key] is T)
+			var = (T)Config[Key];
+			else
+			Config[Key] = var;
+		}
 		void Init()
 		{
 			CheckCfg<float>("Distance between player and building", ref distance);
@@ -31,10 +41,10 @@ namespace Oxide.Plugins
 				if ((float)obj > distance) {
 					return null;
 				}
-				SendReply(netuser, string.Format( GetMessage("ClosestBuilding", netuser.userID), (float)obj, distance));
+				SendReply(netuser, string.Format( GetMessage("ClosestBuilding", netuser.userID.ToString()), (float)obj, distance));
 				return true;
 			} else {
-				SendReply(netuser, getMessage("ThereAreNoBuildings", netuser.userID);
+				SendReply(netuser, GetMessage("ThereAreNoBuildings", netuser.userID.ToString()));
 				return null;
 			}
 		}
@@ -80,33 +90,17 @@ namespace Oxide.Plugins
 			
 			return false;
 		}
-	}
-	#region Localization
-	void LoadDefaultMessages()
-	{
-		var messages = new Dictionary<string, string>
-		{
-			{"ClosestBuilding","Closest building is {0} there must be distance more than {1}" },
-			{"ThereAreNoBuildings","There aren't any buildings in game." }
-		};
-		SortedDictionary<string, string> sortedMessages = new SortedDictionary<string, string>(messages);
-		messages.Clear();
-		foreach (KeyValuePair<string, string> Current in sortedMessages) messages.Add(Current.Key, Current.Value);
-		lang.RegisterMessages(messages, this);
-		SaveConfig();
-	}
-	string GetMessage(string key, string steamId = null) => lang.GetMessage(key, this, steamId);
-	#endregion
-	
-	#region ConfigFiles
-	void LoadDefaultConfig() { }
 
-	private void CheckCfg<T>(string Key, ref T var)
-	{
-		if (Config[Key] is T)
-		var = (T)Config[Key];
-		else
-		Config[Key] = var;
-	} 
-	#endregion
+		void LoadDefaultMessages()
+		{
+			Dictionary<string,string> messages = new Dictionary<string, string>
+			{
+				{"ClosestBuilding","Closest building is {0} there must be distance more than {1}" },
+				{"ThereAreNoBuildings","There aren't any buildings in game." }
+			};
+			lang.RegisterMessages(messages, this);
+		}
+		string GetMessage(string key, string steamId = null) => lang.GetMessage(key, this, steamId);
+
+	}
 }
