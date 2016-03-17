@@ -6,12 +6,16 @@ using System.Reflection;
 using System.Collections.Generic;
 using UnityEngine;
 using Oxide.Core;
+using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
 {
     [Info("TeleportGlitchFix", "Prefix", "1.0.0")]
     class TeleportGlitchFix : RustLegacyPlugin
     {
+        [PluginReference]
+        Plugin Share;
+		
 		static float distance = 50.0f;
 		
         /*[ChatCommand("checkwhere")]
@@ -64,9 +68,22 @@ namespace Oxide.Plugins
 			float tempf = 0.0f;
 			bool set = false;
 			bool notEmpty = StructureMaster.AllStructures.Any();
+			string userid = netuser.userID.ToString();
 			if(notEmpty) {
 				foreach (StructureMaster master in (List<StructureMaster>)StructureMaster.AllStructures)
 				{
+					// If building owner is netuser > skip
+					if(userid.Equals(master.ownerID.ToString()))
+						continue;
+					// If using share plugin and it's sharing
+                    if(Share != null)
+                    {
+                        if((bool)Share.Call("isSharing", userid, master.ownerID.ToString()))
+                        {
+							continue;
+                        }
+                    }
+					
 					Vector2 v2 = new Vector2(master.transform.position.x, master.transform.position.z);
 					if (!set) {
 						dist = Vector2.Distance(v1, v2);
