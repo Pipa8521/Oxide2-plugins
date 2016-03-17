@@ -7,7 +7,7 @@ using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
 {
-    [Info("ChatAPI", "Prefix", "0.1.1")]
+    [Info("ChatAPI", "Prefix", "0.2.0")]
     public class ChatAPI : RustLegacyPlugin
     {
         [PluginReference]
