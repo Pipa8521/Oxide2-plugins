@@ -1,23 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Oxide.Core;
 using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
 {
-    [Info("ChatAPI", "Prefix", "0.2.0")]
+    [Info("ChatAPI", "Prefix", "0.3.0")]
     public class ChatAPI : RustLegacyPlugin
     {
-        [PluginReference]
-        Plugin simplemute;
 		
 		public string ChatTag = "[ChatAPI]";
 		static string FormatTag = "{0} ({1}) {2}";
 		static string FormatMessage = "{0}{1}";
 		
-		class ChatPerson
+		class ChatPerson : ChatAPI
 		{
 			public string displayName;
 			public string prefix;
@@ -26,6 +25,9 @@ namespace Oxide.Plugins
 			public int suffix_pr = 0; // Suffix priority
 			public string chatcolor = "[color #ffffff]";
 			public int chatcolor_pr = 0; // Suffix priority
+			public Plugin listenersplugin;
+			public List<NetUser> listoflisteners;
+			public string tag = "";
 
 			public ChatPerson(string _displayName, string _prefix = "", string _suffix = "", string _chatcolor = "[color #ffffff]")
 			{
@@ -33,8 +35,12 @@ namespace Oxide.Plugins
 				prefix = _prefix;
 				suffix = _suffix;
 				chatcolor = _chatcolor;
+				UpdateTag();
 			}
 			
+			public void UpdateTag() {
+				tag = string.Format(FormatTag, prefix, displayName, suffix).Trim();
+			}
 		}
 		
 		Dictionary<NetUser, ChatPerson> ChatPersonData = new Dictionary<NetUser, ChatPerson>();
@@ -54,18 +60,18 @@ namespace Oxide.Plugins
             CheckCfg<string>("Chat: Player tag", ref FormatTag);
 			CheckCfg<string>("Chat: Player message", ref FormatMessage);
 			SaveConfig();
-		}
-		
-        void Loaded()
-        {
-            if (simplemute == null)
-            {
-                Puts("Use simple mute to mute players! http://oxidemod.org/plugins/simple-mute.999/");
-                return;
-            } else {
-				Puts("ChatAPI uses simplemute for mutes");
+			
+			// If loaded mannualy
+			if(PlayerClient.All.Count > 0) {
+				var netusers = PlayerClient.All.Select(pc => pc.netUser).ToList();
+				for (int i = 0; i < netusers.Count; i++)
+				{
+					TryToAdd(netusers[i]);
+					i++;
+				}
 			}
-        }
+		
+        }	
 		
 		bool OnPlayerChat(NetUser netuser, string message)
 		{
@@ -79,41 +85,40 @@ namespace Oxide.Plugins
 			if(obj is string) {
 				message = (string)obj;
 				strip = false;
+			} else {
+				message = StripBBCode(message);
 			}
-			if(simplemute == null) {
-				if(SendMessage(netuser, message, strip)) {
-					return false;
+			object cl = getCP(netuser);
+			if(cl is bool) 
+				return false;
+			
+			ChatPerson cp = (ChatPerson)cl;
+			if(cp == null)
+				return false;
+			
+			string msg = string.Format(FormatMessage, cp.chatcolor, message).Trim();
+			string ctag = cp.tag;
+			
+			if(ctag == null) {
+				cp.UpdateTag();
+				ctag = cp.tag;
+			}
+			
+			if ( cp.listenersplugin != null && cp.listoflisteners.Any()) {
+				foreach (NetUser listener in cp.listoflisteners.ToList())
+				{
+					if(listener == null)
+						continue;
+					
+					rust.SendChatMessage(listener, ctag, msg);
 				}
 			} else {
-				Object muted = simplemute.Call("IsMuted", netuser);
-				if(muted is bool) {
-					bool isMuted = (bool)muted;
-					
-					if (isMuted) {
-						rust.SendChatMessage(netuser, ChatTag, "[color red]You are muted!");
-						return false;
-					}
-				}
-				if(SendMessage(netuser, message, strip)) {
-					return false;
-				}
+				rust.BroadcastChat(ctag, msg);
 			}
+			
+			Puts(ctag + " " + StripBBCode(message));
+			
 			return true;
-		}
-		
-		bool SendMessage(NetUser netuser, string message, bool strip = true) {
-			if(getCP(netuser) is ChatPerson) {
-				ChatPerson cp = (ChatPerson)getCP(netuser);
-				string tag = string.Format(FormatTag, cp.prefix, cp.displayName, cp.suffix).Trim();
-				if(strip) {
-					message = StripBBCode(message);
-				}
-				string msg = string.Format(FormatMessage, cp.chatcolor, message).Trim();
-				rust.BroadcastChat(tag, msg);
-				Puts(tag + " " + StripBBCode(message));
-				return true;
-			}
-			return false;
 		}
 		
 		string StripBBCode(string bbCode)
@@ -130,6 +135,14 @@ namespace Oxide.Plugins
 			if (!(ChatPersonData.ContainsKey(netuser))) {
 				ChatPerson cp = new ChatPerson(netuser.displayName);
 				ChatPersonData.Add(netuser, cp);
+			}
+		}
+		
+		void TryToAdd(NetUser netuser) {
+			if (!(ChatPersonData.ContainsKey(netuser))) {
+				ChatPerson cp = new ChatPerson(netuser.displayName);
+				ChatPersonData.Add(netuser, cp);
+				Interface.CallHook("onChatApiPlayerLoad", netuser);
 			}
 		}
 		
@@ -164,6 +177,7 @@ namespace Oxide.Plugins
 				if(priority >= cp.prefix_pr) {
 					cp.prefix = prefix;
 					cp.prefix_pr = priority;
+					cp.UpdateTag();
 					return true;
 				}
 			}
@@ -175,6 +189,7 @@ namespace Oxide.Plugins
 				ChatPerson cp = (ChatPerson)getCP(netuser);
 				cp.prefix = "";
 				cp.prefix_pr = 0;
+				cp.UpdateTag();
 				return true;
 			}
 			return false;
@@ -194,6 +209,7 @@ namespace Oxide.Plugins
 				if(priority >= cp.suffix_pr) {
 					cp.suffix = suffix;
 					cp.suffix_pr = priority;
+					cp.UpdateTag();
 					return true;
 				}
 			}
@@ -205,6 +221,7 @@ namespace Oxide.Plugins
 				ChatPerson cp = (ChatPerson)getCP(netuser);
 				cp.suffix = "";
 				cp.suffix_pr = 0;
+				cp.UpdateTag();
 				return true;
 			}
 			return false;
@@ -231,6 +248,7 @@ namespace Oxide.Plugins
 			if(getCP(netuser) is ChatPerson) {
 				ChatPerson cp = (ChatPerson)getCP(netuser);
 				cp.displayName = netuser.displayName;
+				cp.UpdateTag();
 				return true;
 			}
 			return false;
@@ -262,6 +280,54 @@ namespace Oxide.Plugins
 				cp.chatcolor = "[color white]";
 				cp.chatcolor_pr = 0;
 				return true;
+			}
+			return false;
+		}
+		bool setCustomTag(NetUser netuser, string tag) {
+			if(getCP(netuser) is ChatPerson) {
+				ChatPerson cp = (ChatPerson)getCP(netuser);
+				cp.tag = tag;
+				
+				return true;
+			}
+			return false;
+		}
+		
+		bool resetCustomTag(NetUser netuser) {
+			if(getCP(netuser) is ChatPerson) {
+				ChatPerson cp = (ChatPerson)getCP(netuser);
+				cp.UpdateTag();
+				return true;
+			}
+			return false;
+		}
+		
+		bool setListenersList(NetUser netuser, List<NetUser> list, Plugin plugin) {
+			if(getCP(netuser) is ChatPerson) {
+				
+				ChatPerson cp = (ChatPerson)getCP(netuser);
+				if(cp.listenersplugin == null) {
+					cp.listenersplugin = plugin;
+					cp.listoflisteners = list;
+					return false;
+				}
+			}
+			return false;
+		}
+		
+		bool resetListenersList(NetUser netuser, Plugin plugin) {
+			if(getCP(netuser) is ChatPerson) {
+				ChatPerson cp = (ChatPerson)getCP(netuser);
+				if(cp.listenersplugin == null) {
+					cp.listoflisteners.Clear();
+					return true;
+				} else {
+					if(plugin.Name.Equals(cp.listenersplugin.Name)) {
+						cp.listoflisteners.Clear();
+						return true;
+					}
+				}
+				
 			}
 			return false;
 		}
