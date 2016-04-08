@@ -13,16 +13,18 @@ namespace Oxide.Plugins
 		
 		Dictionary<NetUser, int> LastMessage = new Dictionary<NetUser, int>();
 
+		/*
+		It's not working for some reasons.
 		void Init() {
 			if(ChatAPI == null) {
 				Puts("Chat API not running, this plugin won't work without it http://oxidemod.org/plugins/chatapi.1768/");
 			}
-		}
+		}*/
 		
 		void OnPlayerConnected(NetUser netuser)
 		{
 			if (!(LastMessage.ContainsKey(netuser))) {
-				LastMessage.Add(netuser, 0);
+				LastMessage.Add(netuser, UnixTimestamp()-5);
 			}
 		}
 		
@@ -43,16 +45,14 @@ namespace Oxide.Plugins
 			int now = UnixTimestamp();
 			int newtime = now+5;
 			if (!(LastMessage.ContainsKey(netuser))) {
-				LastMessage.Add(netuser, now+5);
-				return true;
-			} else if (LastMessage[netuser] < now) {
-				int left = now-LastMessage[netuser];
+				LastMessage.Add(netuser, newtime);
+			} else if (LastMessage[netuser] > now) {
+				int left = LastMessage[netuser]-now;
 				if(left > 0) {
 					rust.SendChatMessage(netuser, string.Format("You must wait for {0} seconds to type something in chat.", left));
 					return false;
 				} else {
 					LastMessage[netuser] = newtime;
-					return true;
 				}
 			} else {
 				LastMessage[netuser] = newtime;
