@@ -17,22 +17,22 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("ClansLegacy", "Prefix", "0.1.0")]
-    public class ClansLegacy : RustLegacyPlugin
-    {
+	[Info("ClansLegacy", "Prefix", "0.1.0")]
+	public class ClansLegacy : RustLegacyPlugin
+	{
 		
-        [PluginReference]
-        Plugin ChatAPI;
+		[PluginReference]
+		Plugin ChatAPI;
 		
-        private readonly Ext.MySql.Libraries.MySql _mySql = Interface.GetMod().GetLibrary<Ext.MySql.Libraries.MySql>();
-        private Connection _mySqlConnection;
+		private readonly Ext.MySql.Libraries.MySql _mySql = Interface.GetMod().GetLibrary<Ext.MySql.Libraries.MySql>();
+		private Connection _mySqlConnection;
 		private Sql sql;
 		
-        static int mysqlPort = 3306;
-        static string mysqlHost = "localhost";
-        static string mysqlUsername = "username";
-        static string mysqlDatabase = "databasename";
-        static string mysqlPass = "password";
+		static int mysqlPort = 3306;
+		static string mysqlHost = "localhost";
+		static string mysqlUsername = "username";
+		static string mysqlDatabase = "databasename";
+		static string mysqlPass = "password";
 		static string ChatTag = "[Clans] ";
 		static int defaultRole = 0;
 		static int leaderRole = 100;
@@ -125,13 +125,13 @@ namespace Oxide.Plugins
 		private const string QExistClanByFullShortNames = "SELECT EXISTS( SELECT * FROM `clans` WHERE `name` =  '{0}' AND `shortname` = '{1}') as exist";
 		// Let's call this when we want to check if clan exists by shortname or full name
 		private const string QExistPlayerInDatabase = "SELECT EXISTS( SELECT * FROM `clanplayers` WHERE `steamid` =  '{0}') as exist";
-        // Let's call this when we want new player to database
+		// Let's call this when we want new player to database
 		private const string QInsertPlayer = "INSERT INTO `clanplayers` (`playername`, `steamid`, `clanid`, `role`) VALUES ('{0}','{1}',{2},{3})";
-        // Let's call this when we want new player to database of new clan
+		// Let's call this when we want new player to database of new clan
 		private const string QInsertPlayerNewClan = "INSERT INTO `clanplayers` (`playername`, `steamid`, `clanid`, `role`) VALUES ('{0}','{1}',(SELECT `id` FROM `clans` WHERE `name` = '{2}'),{3})";
-        // Let's call this when we want to delete all players from clan
+		// Let's call this when we want to delete all players from clan
 		private const string QDeleteAllPlayersFromClan = "DELETE FROM `clanplayers` WHERE `clanid` = {0}";       
-	   // Let's call this when we want to delete clan by name
+		// Let's call this when we want to delete clan by name
 		private const string QDeleteClanByName = "DELETE FROM `clans` WHERE `name` = '{0}'";
 		//  Let's call this when we want to delete clan by id
 		private const string QDeleteClanById = "DELETE FROM `clans` WHERE `id` = {0}";
@@ -143,43 +143,43 @@ namespace Oxide.Plugins
 		
 		void LoadDefaultConfig() { }
 
-        private void CheckCfg<T>(string Key, ref T var)
-        {
-            if (Config[Key] is T)
-                var = (T)Config[Key];
-            else
-                Config[Key] = var;
-        } 
+		private void CheckCfg<T>(string Key, ref T var)
+		{
+			if (Config[Key] is T)
+			var = (T)Config[Key];
+			else
+			Config[Key] = var;
+		} 
 		
-        void Init()
-        {
-            CheckCfg<int>("Mysql: port", ref mysqlPort);
-            CheckCfg<string>("Mysql: host", ref mysqlHost);
-            CheckCfg<string>("Mysql: username", ref mysqlUsername);
-            CheckCfg<string>("Mysql: database", ref mysqlDatabase);
-            CheckCfg<string>("Mysql: password", ref mysqlPass);
+		void Init()
+		{
+			CheckCfg<int>("Mysql: port", ref mysqlPort);
+			CheckCfg<string>("Mysql: host", ref mysqlHost);
+			CheckCfg<string>("Mysql: username", ref mysqlUsername);
+			CheckCfg<string>("Mysql: database", ref mysqlDatabase);
+			CheckCfg<string>("Mysql: password", ref mysqlPass);
 			CheckCfg<bool>("ChatAPI: enabled", ref chatapienabled);
 			CheckCfg<bool>("ChatAPI: use suffix instead of prefix", ref chatapiusesuffix);
 			CheckCfg<int>("ChatAPI: priority for prefix or suffix", ref chatapipriority);
-            SaveConfig();
+			SaveConfig();
 			
 			_mySqlConnection = _mySql.OpenDb(mysqlHost, mysqlPort, mysqlDatabase, mysqlUsername, mysqlPass, this);
 			
 			sql = _mySql.NewSql();
 
-            sql = Ext.MySql.Sql.Builder.Append(@"CREATE TABLE IF NOT EXISTS `clans` (
-									  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-									  `name` varchar(64) COLLATE utf8_unicode_ci NOT NULL UNIQUE KEY,
-									  `shortname` varchar(3) COLLATE utf8_unicode_ci NOT NULL UNIQUE KEY,
-									  `description` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
-									  `created` int(11) NOT NULL,
-									  `updated` int(11) NOT NULL
+			sql = Ext.MySql.Sql.Builder.Append(@"CREATE TABLE IF NOT EXISTS `clans` (
+									`id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+									`name` varchar(64) COLLATE utf8_unicode_ci NOT NULL UNIQUE KEY,
+									`shortname` varchar(3) COLLATE utf8_unicode_ci NOT NULL UNIQUE KEY,
+									`description` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+									`created` int(11) NOT NULL,
+									`updated` int(11) NOT NULL
 									) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;");
 
 			_mySql.Query(sql, _mySqlConnection, cb => { return; } );
-							   
+			
 			sql = _mySql.NewSql();
-							   
+			
 			sql = Ext.MySql.Sql.Builder.Append(@"CREATE TABLE IF NOT EXISTS clanplayers (
 										id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
 										playername VARCHAR(64) NOT NULL,
@@ -189,37 +189,37 @@ namespace Oxide.Plugins
 										joined int(11),
 										lastseen int(11)
 									) ENGINE=MyISAM DEFAULT CHARSET=utf8;");
-							   
+			
 			_mySql.Query(sql, _mySqlConnection, cb => { return; } );
-		
+			
 			// Lets load all clans!
 			
 			sql = _mySql.NewSql();
 
-            sql = Ext.MySql.Sql.Builder.Append(QLoadClans);
+			sql = Ext.MySql.Sql.Builder.Append(QLoadClans);
 			
 			_mySql.Query(sql, _mySqlConnection, cb => {
-					if (cb == null) {
-						Puts("0 clans loaded!");
-					} else {
-						int i = 0;
-						foreach (var entry in cb) {
-							//`id`, `name`, `shortname`, `description`, `created`, `updated`
-							int id = Int32.Parse(entry["id"].ToString());
-							string name = entry["name"].ToString();
-							string shortname = entry["shortname"].ToString();
-							string description = entry["description"].ToString();
-							int created = Int32.Parse(entry["created"].ToString());
-							int updated = Int32.Parse(entry["updated"].ToString());
-							Clan clan = new Clan(id, name, shortname, description, created, updated);
-							ClanData.Add(id, clan);
-							object obj = Interface.CallHook("OnClanLoaded", clan);
-							i++;
-						}
-						Puts(string.Format("{0} clans loaded", i));
+				if (cb == null) {
+					Puts("0 clans loaded!");
+				} else {
+					int i = 0;
+					foreach (var entry in cb) {
+						//`id`, `name`, `shortname`, `description`, `created`, `updated`
+						int id = Int32.Parse(entry["id"].ToString());
+						string name = entry["name"].ToString();
+						string shortname = entry["shortname"].ToString();
+						string description = entry["description"].ToString();
+						int created = Int32.Parse(entry["created"].ToString());
+						int updated = Int32.Parse(entry["updated"].ToString());
+						Clan clan = new Clan(id, name, shortname, description, created, updated);
+						ClanData.Add(id, clan);
+						object obj = Interface.CallHook("OnClanLoaded", clan);
+						i++;
 					}
-					return;
-				} 
+					Puts(string.Format("{0} clans loaded", i));
+				}
+				return;
+			} 
 			);
 			
 			// If loaded mannualy
@@ -232,11 +232,11 @@ namespace Oxide.Plugins
 					i++;
 				}
 			}
+			
+		}	
 		
-        }	
-		
-        void Loaded()
-        {
+		void Loaded()
+		{
 			if(chatapienabled) {
 				if (ChatAPI == null)
 				{
@@ -245,7 +245,7 @@ namespace Oxide.Plugins
 					Puts("Clans uses ChatAPI for suffix or prefix");
 				}
 			}
-        }
+		}
 		
 		bool chatapiworking() {
 			if(chatapienabled) {
@@ -336,51 +336,51 @@ namespace Oxide.Plugins
 			
 			_mySql.Query(sql, _mySqlConnection, cb => {
 				if (cb == null) {
-						rust.SendChatMessage(netuser, "It seems that you don't have a clan yet, use /clans to join or create one.");
-					} else {
-						 foreach (var entry in cb) {
-							//`id`, `playername`, `steamid`,`clanid`,`role`
-							
-							int id = Int32.Parse(entry["id"].ToString());
-							ulong steamid = UInt64.Parse(entry["steamid"].ToString());
-							NetUser netuseris = rust.FindPlayer(steamid.ToString());
-							string playername = MySqlEscape(netuseris.displayName.ToString());
-							if(!(playername.Equals(entry["playername"]))) {
-								sql = _mySql.NewSql();
-								string querys = string.Format(QUpdatePlayerName, netuseris.userID, playername);
-								sql = Ext.MySql.Sql.Builder.Append(querys);
+					rust.SendChatMessage(netuser, "It seems that you don't have a clan yet, use /clans to join or create one.");
+				} else {
+					foreach (var entry in cb) {
+						//`id`, `playername`, `steamid`,`clanid`,`role`
+						
+						int id = Int32.Parse(entry["id"].ToString());
+						ulong steamid = UInt64.Parse(entry["steamid"].ToString());
+						NetUser netuseris = rust.FindPlayer(steamid.ToString());
+						string playername = MySqlEscape(netuseris.displayName.ToString());
+						if(!(playername.Equals(entry["playername"]))) {
+							sql = _mySql.NewSql();
+							string querys = string.Format(QUpdatePlayerName, netuseris.userID, playername);
+							sql = Ext.MySql.Sql.Builder.Append(querys);
 
-								_mySql.Query(sql, _mySqlConnection, cb2 => { return; } );
-							}
-							int cid = Int32.Parse(entry["clanid"].ToString());
-							int role = Int32.Parse(entry["role"].ToString());
+							_mySql.Query(sql, _mySqlConnection, cb2 => { return; } );
+						}
+						int cid = Int32.Parse(entry["clanid"].ToString());
+						int role = Int32.Parse(entry["role"].ToString());
+						
+						ClanPlayer cplayer = new ClanPlayer(playername, steamid, ClanData[cid], role);
+						ClanPlayerData.Add(netuser, cplayer);
+						object ccc = getClanByID(cid);
+						if (ccc is Clan) {
+							Clan clan = (Clan)ccc;
+							clan.addPlayer(netuseris);
+							object obj = Interface.CallHook("OnClanPlayerConnect", clan, netuseris);
 							
-							ClanPlayer cplayer = new ClanPlayer(playername, steamid, ClanData[cid], role);
-							ClanPlayerData.Add(netuser, cplayer);
-							object ccc = getClanByID(cid);
-							if (ccc is Clan) {
-								Clan clan = (Clan)ccc;
-								clan.addPlayer(netuseris);
-								object obj = Interface.CallHook("OnClanPlayerConnect", clan, netuseris);
-								
-								if (chatapiworking()) {
-									string action = "setSuffix";
-									if(!chatapiusesuffix) {
-										action = "setPrefix";
-									}
-									ChatAPI.Call(action, netuser, clan.shortName, chatapipriority);
+							if (chatapiworking()) {
+								string action = "setSuffix";
+								if(!chatapiusesuffix) {
+									action = "setPrefix";
 								}
-								
-							} else {
-								Puts(string.Format("Failed assign user to clan id: {0}", cid));
+								ChatAPI.Call(action, netuser, clan.shortName, chatapipriority);
 							}
 							
-							// some stuff later adding dictionary support with custom class
-							
-						 }
+						} else {
+							Puts(string.Format("Failed assign user to clan id: {0}", cid));
+						}
+						
+						// some stuff later adding dictionary support with custom class
+						
 					}
-					
-				});
+				}
+				
+			});
 			
 		}
 		
@@ -398,19 +398,19 @@ namespace Oxide.Plugins
 			}
 		}
 
-        [ChatCommand("clans")]
-        void Command_Clans(NetUser netuser, string command, string[] args)
-        {
+		[ChatCommand("clans")]
+		void Command_Clans(NetUser netuser, string command, string[] args)
+		{
 			CommandH_Clans(netuser, command, args);
-        }
-        [ChatCommand("clan")]
-        void Command_Clan(NetUser netuser, string command, string[] args)
-        {
+		}
+		[ChatCommand("clan")]
+		void Command_Clan(NetUser netuser, string command, string[] args)
+		{
 			CommandH_Clans(netuser, command, args);
-        }
-        [ChatCommand("c")]
-        void Command_C(NetUser netuser, string command, string[] args)
-        {
+		}
+		[ChatCommand("c")]
+		void Command_C(NetUser netuser, string command, string[] args)
+		{
 			object clan = getPlayerClan(netuser);
 			if(clan is Clan) {
 				if (args.Length == 0 ) {
@@ -431,7 +431,7 @@ namespace Oxide.Plugins
 			} else {
 				rust.SendChatMessage(netuser, ChatTag, "You don't belong to any clan");
 			}
-        }
+		}
 		
 		List<String> HelpPage(NetUser netuser, string command, string[] args) {
 			List<string> message = new List<string>();
@@ -543,12 +543,12 @@ namespace Oxide.Plugins
 							rust.SendChatMessage(netuser, ChatTag, "[color red]Short name of clan is already taken");
 							return;
 						}
-					
+						
 						sql = _mySql.NewSql();
 						sql = Ext.MySql.Sql.Builder.Append(string.Format(QExistClanByFullShortNames, MySqlEscape(args[1]), MySqlEscape(args[2])));
 						_mySql.Query(sql, _mySqlConnection, cb2 => {
 							if(netuser == null)
-								return;
+							return;
 							
 							bool exist = false;
 							
@@ -572,37 +572,37 @@ namespace Oxide.Plugins
 							sql = _mySql.NewSql();
 							sql = Ext.MySql.Sql.Builder.Append(string.Format(QExistPlayerInDatabase, netuser.userID.ToString()));
 							
-								_mySql.Query(sql, _mySqlConnection, cb => {
-									if(netuser == null)
-										return;
-									if(cb2 == null) {
-										exist2 = false;
-									} else {
-										foreach(var value in cb2) {
-											if(value["exist"].ToString().Equals("1")) {
-												exist2 = true;
-												break;
-											}
+							_mySql.Query(sql, _mySqlConnection, cb => {
+								if(netuser == null)
+								return;
+								if(cb2 == null) {
+									exist2 = false;
+								} else {
+									foreach(var value in cb2) {
+										if(value["exist"].ToString().Equals("1")) {
+											exist2 = true;
+											break;
 										}
 									}
-									
-									if(exist2) {
-										rust.SendChatMessage(netuser, ChatTag, "[color red]You seem to be already in database, try reconnecting and leaving your current clan!");
-										return;
-									}
-									
-									object ctry = Interface.CallHook("OnClanCreationTry", netuser, command, args);
-									if (ctry is bool) {
-										if((bool)ctry == false)
-											return;
-									}
-									rust.BroadcastChat(ChatTag, string.Format("[color red]{0}[color white] made a new clan called {1} ({2})!", netuser.displayName, MySqlEscape(args[1]), MySqlEscape(args[2])));
-									NewClan(netuser, MySqlEscape(args[1]), MySqlEscape(args[2]));
+								}
 								
-								});
+								if(exist2) {
+									rust.SendChatMessage(netuser, ChatTag, "[color red]You seem to be already in database, try reconnecting and leaving your current clan!");
+									return;
+								}
+								
+								object ctry = Interface.CallHook("OnClanCreationTry", netuser, command, args);
+								if (ctry is bool) {
+									if((bool)ctry == false)
+									return;
+								}
+								rust.BroadcastChat(ChatTag, string.Format("[color red]{0}[color white] made a new clan called {1} ({2})!", netuser.displayName, MySqlEscape(args[1]), MySqlEscape(args[2])));
+								NewClan(netuser, MySqlEscape(args[1]), MySqlEscape(args[2]));
+								
+							});
 							
 							return; 
-						
+							
 						});
 						
 
@@ -637,7 +637,7 @@ namespace Oxide.Plugins
 					object ctry = Interface.CallHook("OnClanJoin", netuser, clan);
 					if (ctry is bool) {
 						if((bool)ctry == false)
-							return;
+						return;
 					}
 					
 					// Okey all passed.
@@ -668,7 +668,7 @@ namespace Oxide.Plugins
 					var first = cb.ElementAt(0);
 					NetUser netuseris = rust.FindPlayer((string)first["netid"].ToString());
 					if(netuseris == null)
-						return;
+					return;
 					
 					int id = Int32.Parse(first["id"].ToString());
 					object ob = getClanPlayer(netuseris);
@@ -690,7 +690,7 @@ namespace Oxide.Plugins
 						if(players > 1) {
 							var entry = cb.ElementAt(1);
 							if(entry == null)
-								return;
+							return;
 							var newleader = rust.FindPlayer((string)entry["steamid"].ToString());
 							// If player is connected
 							if(newleader != null) {
@@ -732,7 +732,7 @@ namespace Oxide.Plugins
 					}
 
 				}
-					
+				
 			});
 		}
 		
@@ -838,10 +838,10 @@ namespace Oxide.Plugins
 				sql = Ext.MySql.Sql.Builder.Append(query2);
 				_mySql.Query(sql, _mySqlConnection, cb2 => {
 					if (cb2 == null) 
-						return;
+					return;
 					var entry = cb2.ElementAt(0);
 					if(entry == null)
-						return;
+					return;
 					
 					int id = Int32.Parse(entry["id"].ToString());
 					string name = entry["name"].ToString();
@@ -977,12 +977,12 @@ namespace Oxide.Plugins
 		{
 			int startIndex = 0;
 			int endIndex = 0;
-		 
+			
 			if (page <= 0)
 			{
 				page = 1;
 			}
-		 
+			
 			if (recordsPerPage <= 0)
 			{
 				startIndex = 0;
@@ -993,19 +993,19 @@ namespace Oxide.Plugins
 				startIndex = (page * recordsPerPage) - recordsPerPage;
 				endIndex = (page * recordsPerPage) - 1;
 			}
-		 
+			
 			//Cap end Index
 			if (endIndex > source.Count - 1)
 			{
 				endIndex = source.Count - 1;
 			}
-		 
+			
 			List<T> newList = new List<T>();
 			for (int x = startIndex; x <= endIndex; x++)
 			{
 				newList.Add((T)source[x]);
 			}
-		 
+			
 			return newList;
 		}
 		void resetTag(NetUser netuser) {
@@ -1018,5 +1018,5 @@ namespace Oxide.Plugins
 			}
 		}
 		
-    }
+	}
 }
