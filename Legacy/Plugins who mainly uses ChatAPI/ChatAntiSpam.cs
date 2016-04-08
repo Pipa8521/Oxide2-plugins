@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Oxide.Core;
 using Oxide.Core.Plugins;
 
@@ -38,25 +39,27 @@ namespace Oxide.Plugins
 			return unixTimestamp;
 		}
 
-		object ChatAPIPlayerChat(NetUser netuser, string message)
-		
-		int now = UnixTimestamp();
-		if (!(LastMessage.ContainsKey(netuser))) {
-			LastMessage.Add(netuser, now+5);
-			return true;
-		} else if(LastMessage[netuser] < now) {
-			int left = now-LastMessage[netuser];
-			if(left > 0) {
-				rust.SendChatMessage(netuser, string.Format("You must wait for {0} seconds to type something in chat.", left);
-				return false;
-			} else {
-				LastMessage[netuser] = now+5;
+		object ChatAPIPlayerChat(NetUser netuser, string message) {
+			int now = UnixTimestamp();
+			int newtime = now+5;
+			if (!(LastMessage.ContainsKey(netuser))) {
+				LastMessage.Add(netuser, now+5);
 				return true;
+			} else if (LastMessage[netuser] < now) {
+				int left = now-LastMessage[netuser];
+				if(left > 0) {
+					rust.SendChatMessage(netuser, string.Format("You must wait for {0} seconds to type something in chat.", left));
+					return false;
+				} else {
+					LastMessage[netuser] = newtime;
+					return true;
+				}
+			} else {
+				LastMessage[netuser] = newtime;
 			}
-		} else {
-			LastMessage[netuser] = now+5;
 			return true;
 		}
+	
 	}
 }
 
