@@ -4,42 +4,42 @@ using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
 {
-   [Info("ChatAntiSpam", "Prefix", "0.1.0")]
-   public class ChatAntiSpam: RustLegacyPlugin
-   {
-     [PluginReference]
-     Plugin ChatAPI;
-	 
-	 Dictionary<NetUser, int>  = new Dictionary<NetUser, int>();
-
-     void Init() {
-       if(ChatAPI == null) {
-         Puts("Chat API not running, this plugin won't work without it http://oxidemod.org/plugins/chatapi.1768/");
-       }
-     }
-	 
-	void OnPlayerConnected(NetUser netuser)
+	[Info("ChatAntiSpam", "Prefix", "0.1.0")]
+	public class ChatAntiSpam: RustLegacyPlugin
 	{
-		if (!(LastMessage.ContainsKey(netuser))) {
-			LastMessage.Add(netuser, 0);
-		}
-	}
-	
-	void OnPlayerDisconected(uLink.NetworkPlayer networkPlayer)
-	{
-		NetUser netuser = (NetUser)networkPlayer.GetLocalData();
-		if(LastMessage.ContainsKey(netuser)) {
-			LastMessage.Remove(netuser);
-		}
-	}
-	
-	int UnixTimestamp() {
-		Int32 unixTimestamp = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
-		return unixTimestamp;
-	}
+		[PluginReference]
+		Plugin ChatAPI;
+		
+		Dictionary<NetUser, int>  = new Dictionary<NetUser, int>();
 
-	object ChatAPIPlayerChat(NetUser netuser, string message)
-	
+		void Init() {
+			if(ChatAPI == null) {
+				Puts("Chat API not running, this plugin won't work without it http://oxidemod.org/plugins/chatapi.1768/");
+			}
+		}
+		
+		void OnPlayerConnected(NetUser netuser)
+		{
+			if (!(LastMessage.ContainsKey(netuser))) {
+				LastMessage.Add(netuser, 0);
+			}
+		}
+		
+		void OnPlayerDisconected(uLink.NetworkPlayer networkPlayer)
+		{
+			NetUser netuser = (NetUser)networkPlayer.GetLocalData();
+			if(LastMessage.ContainsKey(netuser)) {
+				LastMessage.Remove(netuser);
+			}
+		}
+		
+		int UnixTimestamp() {
+			Int32 unixTimestamp = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+			return unixTimestamp;
+		}
+
+		object ChatAPIPlayerChat(NetUser netuser, string message)
+		
 		int now = UnixTimestamp();
 		if (!(LastMessage.ContainsKey(netuser))) {
 			LastMessage.Add(netuser, now+5);
