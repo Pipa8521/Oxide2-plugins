@@ -10,7 +10,7 @@ namespace Oxide.Plugins
 		[PluginReference]
 		Plugin ChatAPI;
 		
-		Dictionary<NetUser, int>  = new Dictionary<NetUser, int>();
+		Dictionary<NetUser, int> LastMessage = new Dictionary<NetUser, int>();
 
 		void Init() {
 			if(ChatAPI == null) {
