@@ -59,7 +59,7 @@ namespace Oxide.Plugins
 			}
 			return true;
 		}
-	
+		
 	}
 }
 
