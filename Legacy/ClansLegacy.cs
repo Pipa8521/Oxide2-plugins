@@ -11,7 +11,6 @@ using System.Collections;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
-
 using UnityEngine;
 
 
@@ -48,7 +47,10 @@ namespace Oxide.Plugins
 			public string description;
 			public int creationDate;
 			public int updateDate;
+			public bool open;
 			List<NetUser> members = new List<NetUser>();
+			List<NetUser> invited = new List<NetUser>();
+			
 
 			public Clan(int _id, string _fullName, string _shortName, string _description, int _creationDate, int _updateDate)
 			{
@@ -58,6 +60,31 @@ namespace Oxide.Plugins
 				description = _description;
 				creationDate = _creationDate;
 				updateDate =  _updateDate;
+				open = false;
+			}
+			
+			public setOpened(bool sbop) {
+				if (sbop) {
+					open = true;
+				} else {
+					open = false;
+				}
+			}
+			
+			public setInvited(NetUser netuser, bool invite = true) {
+				if (invite) {
+					if (!(invited.Contains(netuser))) {
+						invited.Add(netuser);
+					}
+				} else {
+					if (invited.Contains(netuser)) {
+						invited.Remove(netuser);
+					}
+				}
+			}
+			
+			public List<NetUser> getInviteList() {
+				return invited;
 			}
 			
 			public int CountOnlinePl() {
@@ -77,7 +104,7 @@ namespace Oxide.Plugins
 				return members;
 			}
 		}
-		
+		// TODO :: Add to clanplayer offline members too, make checks and filter to check online/offline members
 		class ClanPlayer
 		{
 			public int id;
@@ -98,7 +125,7 @@ namespace Oxide.Plugins
 		// Dictionaries for clans
 		Dictionary<int, Clan> ClanData = new Dictionary<int, Clan>();
 		Dictionary<NetUser, ClanPlayer> ClanPlayerData = new Dictionary<NetUser, ClanPlayer>();
-		Dictionary<NetUser, List<Clan>> Invites = new Dictionary<NetUser, List<Clan>>();
+		//Dictionary<NetUser, List<Clan>> Invites = new Dictionary<NetUser, List<Clan>>();
 
 		// MySQL Queries
 		// I put in every single query Q prefix because I don't want them to mix with functions
@@ -628,8 +655,8 @@ namespace Oxide.Plugins
 					}
 					
 					Clan clan = (Clan)ob;
-					
-					if(!Invites[netuser].Contains(clan)) {
+					List<NetUser> list = clan.getInviteList().ToList();
+					if(!list.Contains(netuser)) {
 						rust.SendChatMessage(netuser, ChatTag, string.Format("[color red]{0} haven't invited to join them!", clan.fullName));
 						return;
 					}
@@ -643,7 +670,7 @@ namespace Oxide.Plugins
 					// Okey all passed.
 					AddToClan(netuser, clan);
 					// Remove invite
-					Invites[netuser].Remove(clan);
+					clan.setInvited(netuser, false);
 					
 				} else {
 					object ccmd = Interface.CallHook("OnClanCommand", netuser, command, args);
