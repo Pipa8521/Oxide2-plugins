@@ -75,7 +75,7 @@ namespace Oxide.Plugins
 			NetUser attacker = damage.attacker.client?.netUser;
 			NetUser victim = damage.victim.client?.netUser;
 			if (attacker == null || victim == null) return;
-			if (attacker == victim) return;
+			if (damage.attacker.client == damage.victim.client) return;
 
 			WeaponImpact impact = damage.extraData as WeaponImpact;
 			string weapon = impact?.dataBlock.name ?? UNKNOWN;
