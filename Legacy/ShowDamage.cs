@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-	[Info("Show Damage", "PreFiX", 0.1)]
+	[Info("Show Damage", "PreFiX", 0.1.0)]
 	[Description("Shows damage as given and received by player")]
 	public class ShowDamage : RustLegacyPlugin
 	{
@@ -76,19 +76,16 @@ namespace Oxide.Plugins
 			if (attacker == victim) return;
 
 			WeaponImpact impact = damage.extraData as WeaponImpact;
-			var weapon = impact?.dataBlock.name ?? UNKNOWN;
+			string weapon = impact?.dataBlock.name ?? UNKNOWN;
 			double dmg = Math.Floor(damage.amount);
 			if (dmg == 0) return;
-			var icon = "!";
-			var duration = 4f;
-			var weaponm = "";
+			string icon = "!";
+			float duration = 5f;
+			string weaponm = "";
 			
-			if (weapon != UNKNOWN) weaponm = "with " + weapon;
-			if (damage.attacker.client != null )
-			{
-				PlayerInventory inv = attacker.playerClient.controllable.GetComponent<PlayerInventory>();
-				if (inv != null && (inv.activeItem?.datablock?.name?.Contains("Bow") ?? false)) weaponm = "with " + inv.activeItem.datablock.name;
-			}
+			if (weapon != UNKNOWN) weaponm = string.Format("with {0}", weapon);
+			PlayerInventory inv = attacker.playerClient.controllable.GetComponent<PlayerInventory>();
+			if (inv != null && (inv.activeItem?.datablock?.name?.Contains("Bow") ?? false)) weaponm = string.Format("with {0}", inv.activeItem.datablock.name);
 			if (bUserOtherDamage.ContainsKey(attacker) && bUserOtherDamage[attacker]) rust.Notice(attacker, string.Format("You attacked {0} {1} and made {2} dmg.", victim.displayName, weaponm, dmg), icon, duration);
 			if (bUserSelfDamage.ContainsKey(victim) && bUserSelfDamage[victim])  rust.Notice(victim, string.Format("You were attacked by {0} {1} and he made {2} dmg.", attacker.displayName, weaponm, dmg), icon, duration);
 			Puts(string.Format("{0} attacked {1} with {2} and made {3} dmg.", attacker.displayName, victim.displayName, weaponm, dmg));
