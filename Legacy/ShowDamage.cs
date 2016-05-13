@@ -15,6 +15,8 @@ namespace Oxide.Plugins
 	public class ShowDamage : RustLegacyPlugin
 	{
 		private const string UNKNOWN = "Unknown";
+		// TODO: Add language support, configuration file
+		// TODO: Rewrite Dictionary to List. Only need to check for .Contains
 		Dictionary<NetUser,bool> bUserSelfDamage = new Dictionary<NetUser, bool>();
 		Dictionary<NetUser,bool> bUserOtherDamage = new Dictionary<NetUser, bool>();
 		
