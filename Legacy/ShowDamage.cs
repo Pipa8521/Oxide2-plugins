@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-	[Info("Show Damage", "PreFiX", 0.1.0)]
+	[Info("Show Damage", "PreFiX", "0.1.0")]
 	[Description("Shows damage as given and received by player")]
 	public class ShowDamage : RustLegacyPlugin
 	{
