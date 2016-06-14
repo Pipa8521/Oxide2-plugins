@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Oxide.Core;
 
 namespace Oxide.Plugins
@@ -26,7 +27,7 @@ namespace Oxide.Plugins
 				for (int i = 0; i < netusers.Count; i++)
 				{
 					if(permission.UserHasPermission(netusers[i].userID.ToString(), MyPerm))
-					rust.SendChatMessage(netusers[i], ChatTag, "Player {0} reported {1} for {2}", rust.QuoteSafe(netuser.displayName), rust.QuoteSafe(target.displayName), reason);
+					rust.SendChatMessage(netusers[i], ChatTag, string.Format("Player {0} reported {1} for {2}", rust.QuoteSafe(netuser.displayName), rust.QuoteSafe(target.displayName), reason));
 				}
 			}
 			
